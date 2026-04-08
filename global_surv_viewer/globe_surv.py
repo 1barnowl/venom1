@@ -1,6 +1,7 @@
 """
 GEO-SURVEILLANCE TACTICAL ENGINE - PUBLIC FEED EDITION
 Dependencies: pip install dash dash-bootstrap-components pandas plotly requests opencv-python --break-system-packages
+run, then http://127.0.0.1:8050 in browser
 """
 
 import dash
