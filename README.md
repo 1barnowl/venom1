@@ -1,17 +1,11 @@
 Venom Core functions as a distributed, policy-enforced sensor fusion and event attestation subsystem designed to ingest heterogeneous, real-time telemetry from geospatially dispersed sources—including electro-optical, thermal, acoustic, radio-frequency, and open-source intelligence feeds—and collapse them into a temporally aligned, hierarchically structured, and cryptographically verifiable stream of canonical observables. It applies a role-based access control matrix with classification ceilings at the point of ingestion, ensuring that downstream computational processes receive only authorized, schema-conformant representations of environmental state. The system maintains an append-only, machine-readable audit ledger of all visibility decisions and derived alerts, thereby establishing a non-repudiable chain of perceptual provenance that enables deterministic replay, forensic reconstruction, and gated promotion of autonomous behaviors based on empirically validated situational ground truth.
 
-Constituent Subsystems / Modules / Software
-
+Constituent Subsystems / Modules / Software:
   Global Surveillance Feed (C2-integrated, satellite-uplink-aware)
-  
   Machine Mapping Module
-  
   Environment Mapping Module
-  
   Thermal Imaging Analyzer
-  
   Crowd Density Estimator
-  
   Behavior Tracker
 
 Comprehensive Capabilities
