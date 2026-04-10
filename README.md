@@ -2,17 +2,17 @@ Venom Core functions as a distributed, policy-enforced sensor fusion and event a
 
 Constituent Subsystems / Modules / Software
 
-Global Surveillance Feed (C2-integrated, satellite-uplink-aware)
-
-Machine Mapping Module
-
-Environment Mapping Module
-
-Thermal Imaging Analyzer
-
-Crowd Density Estimator
-
-Behavior Tracker
+  Global Surveillance Feed (C2-integrated, satellite-uplink-aware)
+  
+  Machine Mapping Module
+  
+  Environment Mapping Module
+  
+  Thermal Imaging Analyzer
+  
+  Crowd Density Estimator
+  
+  Behavior Tracker
 
 Comprehensive Capabilities
 
