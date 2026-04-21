@@ -377,7 +377,7 @@ Planned enhancements:
 
 ### Architecture
 
-```
+```text
 /proc filesystem
     ↓
 Scanner (Python)
