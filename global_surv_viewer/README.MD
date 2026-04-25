@@ -1,221 +1,145 @@
-# Geo-Surveillance Feed  v1.0.0
+# Geo-Surveillance Feed (GSF)
 
-A dark, Dash-based global OSINT dashboard that ingests live public feeds for aircraft, earthquakes, fires, air quality, ships, the ISS, and conflict events, then fuses them into a single interactive tile-map terminal with alerts, geofences, anomaly detection, and a versioned JSON API.
+A live, multi-layer geospatial intelligence dashboard built with Dash, Plotly, and Flask. It combines public data feeds into a single interactive map and supporting panels for tracking aircraft, earthquakes, fires, ships, the ISS, air quality, news events, geofences, anomalies, and threat hotspots.
 
-```
-╔═══════════════════════════════════════════════════════════╗
-║   GEO-SURVEILLANCE FEED  ·  VERSION 1.0  — ADVANCED      ║
-║   Global Vision Platform — Public OSINT Edition           ║
-╠═══════════════════════════════════════════════════════════╣
-║  🗺  PRIMARY VIEW: Scattermapbox tile map                ║
-║      CartoDB Dark · zoomable · pannable · street-level   ║
-║  🌍  SECONDARY: Scattergeo globe overview                ║
-║  🌡  DENSITY:   Flights · seismic · fire heatmaps        ║
-║  ⚡  LIVE SOURCES: OpenSky · USGS · FIRMS · OpenAQ       ║
-║  📰  EVENTS: GDELT geo conflict/disaster feed            ║
-║  🛰  SPACE: ISS position + pass predictor                ║
-║  🔲  GEOFENCE: named boxes + ingress/egress alerts       ║
-║  🤖  ANOMALY: rolling z-score spike detector             ║
-║  🔗  CONVERGENCE: 3+ hazard layers in same cell          ║
-║  📋  API: /api/v1/ · /api/stream · /healthz · /metrics   ║
-║  🚀  RUN: python3 gsf_v10.py                             ║
-║  PROD: gunicorn -w 1 -b 0.0.0.0:8050 gsf_v10:application  ║
-╚═══════════════════════════════════════════════════════════╝
-```
+## What it does
 
----
+GSF continuously polls multiple sources and renders them in a browser-based dashboard:
 
-## Features
+- **Aircraft tracking** from OpenSky
+- **Earthquakes** from USGS
+- **Wildfires** from NASA FIRMS
+- **Ships / AIS** from AISStream
+- **ISS position and pass prediction**
+- **Air quality** from OpenAQ
+- **News / incident events** from GDELT
+- **Nearby events and venues** from Ticketmaster and OpenStreetMap
+- **Geofencing** with ingress / egress alerts
+- **Anomaly detection** using rolling z-scores
+- **Convergence detection** for overlapping hazards
+- **Ring-buffer playback** for recent history
+- **SSE live updates** and a small API surface for external use
 
-- **2D tile map first**: primary Scattermapbox view with real tiles and fast zoom from global to street level
-- **Secondary views**: globe overview and density mode for quick spatial comparison
-- **Live public feeds**: OpenSky aircraft, USGS earthquakes, NASA FIRMS fires, OpenAQ air quality, GDELT geo events, ISS telemetry, and optional AIS ship tracking
-- **Layer controls**: toggle flights, quakes, fires, ships, Starlink, ISS, air quality, events, threat scores, geofences, and trails
-- **Geofencing engine**: define bounding boxes and receive enter/exit alerts
-- **Anomaly detection**: rolling z-score monitoring over the latest frame buffer
-- **Convergence detector**: flags cells where multiple hazard classes overlap
-- **Threat scoring**: weighted hazard map built from seismic, air quality, conflict, and fire intensity
-- **ISS pass prediction**: computes upcoming passes for a chosen latitude/longitude
-- **SSE live stream**: push updates to the dashboard without polling
-- **GeoJSON export**: download the current fused dataset for external tooling
-- **Prometheus-style metrics**: lightweight `/metrics` endpoint for service counters
-- **Config-driven setup**: all keys and intervals live in `gsf.ini`
+The dashboard also includes a **2D tile map**, a **global overview**, and a **density view** for layering and comparison.
 
----
+## Main features
 
-## Install
+### Live map views
+- Tile map with zoom and pan
+- Layer toggles for flights, quakes, fires, ships, Starlink, ISS, air quality, events, threat scores, geofences, trails, radar, and POIs
+- Optional deck.gl WebGL view at `/deck`
+- Basemap switching between dark, light, and street styles
 
-### 1. Clone or extract
+### Intelligence modules
+- **Threat scoring**: aggregates seismic, air quality, conflict, and fire signals into a normalized 0–100 score
+- **Anomaly detection**: tracks spikes in flights, earthquakes, magnitude, and PM2.5
+- **Geofencing**: named bounding boxes with enter/exit notifications
+- **Convergence alerts**: warns when 3+ hazard layers overlap in the same grid cell
+- **ISS pass predictor**: estimates upcoming passes from the user’s location
 
-```bash
-git clone https://github.com/yourname/geo-surveillance-feed.git
-cd geo-surveillance-feed
-```
+### Playback and telemetry
+- In-memory SQLite ring buffer for recent snapshots
+- Telemetry charts showing recent aircraft count, quake count, and max quake magnitude
+- Snapshot and frame listing endpoints for replay / inspection
 
-### 2. Install dependencies
+### Cameras
+- Supports up to 4 MJPEG camera sources
+- Live camera swapping from the UI
+- Fallback image shown when a source is offline
 
-```bash
-pip install dash dash-bootstrap-components pandas plotly requests opencv-python numpy websocket-client sgp4 --break-system-packages
-```
-
-If your environment does not need the system-packages flag, leave it off.
-
-### 3. Optional API keys
-
-The app runs with defaults, but some layers improve with keys:
-
-- `AIS_API_KEY` for live ship tracking
-- `FIRMS_MAP_KEY` for NASA FIRMS fire data
-- `OPENAQ_API_KEY` for higher-limit air quality access
-
-You can set them as environment variables or in `gsf.ini`.
-
----
-
-## Configure
-
-Generate the config file first:
-
-```bash
-python3 gsf_v10.py --init-config
-```
-
-That creates `gsf.ini`. Edit the `[keys]` section and any intervals, thresholds, or camera URLs you want to change.
-
-Main config groups:
-
-- **[gsf]**: host, port, debug
-- **[keys]**: API keys
-- **[cameras]**: up to 4 camera sources
-- **[limits]**: row caps, ring buffer size, trail lengths
-- **[intervals]**: refresh cadence per data source
-- **[alerts]**: thresholds for earthquakes, AQ, GDELT, anomaly z-score, convergence
-- **[threat]**: hazard weights and grid size
-
----
-
-## Run
-
-```bash
-python3 gsf_v10.py
-```
-
-### Production WSGI
-
-```bash
-gunicorn -w 1 -b 0.0.0.0:8050 gsf_v10:application
-```
-
-### URLs
-
-- **Main app**: `http://127.0.0.1:8050`
-- **WebGL view**: `http://127.0.0.1:8050/deck`
-- **API index**: `http://127.0.0.1:8050/api/v1/`
-- **Health**: `http://127.0.0.1:8050/healthz`
-- **Metrics**: `http://127.0.0.1:8050/metrics`
-
----
-
-## API
-
-### Versioned endpoints
-
-- `GET /api/v1/`
-- `GET /api/v1/snapshot`
-- `GET /api/v1/alerts`
-- `GET /api/v1/flights`
-- `GET /api/v1/earthquakes`
-- `GET /api/v1/ships`
-- `GET /api/v1/threat`
-- `GET /api/v1/anomaly`
-- `GET /api/v1/iss/position`
-- `GET /api/v1/iss/passes?lat=48.85&lon=2.35&n=5`
-- `GET /api/v1/geofences`
-- `POST /api/v1/geofences`
-- `DELETE /api/v1/geofences/<name>`
-
-### Utility endpoints
-
-- `GET /api/stream` — server-sent events feed
-- `GET /api/export.geojson` — fused dataset export
-- `GET /api/trail/<icao>` — aircraft trail history
-- `GET /api/frames/list` — ring buffer frame index
-- `GET /api/frame/<idx>` — retrieve a stored frame
-- `GET /api/weather?lat=&lon=` — short-term weather for a point
-
----
-
-## Interface layout
-
-- **Top bar**: live counters, UTC clock, quick links
-- **Left panel**: map controls, view toggles, layer toggles
-- **Center**: tile map, globe view, or density heatmap
-- **Right panel**: inspection, geofences, telemetry, and threat leaderboard
-- **Bottom bar**: quick route buttons, live SSE status, WebGL toggles
-
-### Map layers
-
-- Flights
-- Quakes
-- Fires
-- Ships
-- Starlink satellites
-- ISS track
-- Air quality
-- GDELT events
-- Threat heatmap
-- Geofence outlines
-- Trails
-
----
-
-## Project layout
-
-```text
-gsf_v10.py                 # Single-file Dash + Flask app
-gsf.ini                    # External config created by --init-config
-README.md                  # Project overview and usage
-```
-
-This version is intentionally packaged as a single Python entry point, with the full UI, fetchers, API routes, and alert engines inside `gsf_v10.py`.
-
----
+### Search and POI tools
+- Location search via Nominatim
+- Nearby POI discovery via OpenStreetMap Overpass
+- Nearby event lookup using Ticketmaster and OSM venues
 
 ## Data sources
 
-- **OpenSky Network** for aircraft state data
-- **USGS** for earthquake feeds
-- **NASA FIRMS** for fire detections
-- **OpenAQ** for air quality measurements
-- **GDELT** for conflict/disaster geo events
-- **Where The ISS At / Celestrak** for ISS data and TLEs
-- **AIS Stream** for ship telemetry
-- **Open-Meteo** for point weather queries
-- **RainViewer** for radar metadata
-- **OpenStreetMap / CartoDB tiles** for map rendering
+GSF can work with mostly free public APIs, with some optional keys:
 
----
+- OpenSky
+- USGS
+- NASA FIRMS
+- AISStream
+- Open-Meteo
+- RainViewer
+- OpenAQ
+- GDELT
+- CelesTrak + SGP4
+- Ticketmaster Discovery API
+- OpenStreetMap / Overpass / Nominatim
+
+Optional environment variables and config keys include:
+
+- `AIS_API_KEY`
+- `FIRMS_MAP_KEY`
+- `OPENAQ_API_KEY`
+- `TICKETMASTER_API_KEY`
+
+## Configuration
+
+Run this once to create `gsf.ini`:
+
+```bash
+python3 gsf_v12.py --init-config
+```
+
+Then edit the generated file and fill in any API keys you need.
+
+## Installation
+
+Install the dependencies used by the script:
+
+```bash
+pip install dash dash-bootstrap-components pandas plotly requests opencv-python numpy websocket-client sgp4
+```
+
+## Running
+
+```bash
+python3 gsf_v12.py
+```
+
+Default host and port come from `gsf.ini`:
+
+- Host: `0.0.0.0`
+- Port: `8050`
+
+## Production / WSGI
+
+The app exposes a Flask server object for WSGI deployment:
+
+```bash
+gunicorn -w 1 -b 0.0.0.0:8050 gsf_v12:application
+```
+
+## Important endpoints
+
+- `/` — main dashboard
+- `/deck` — WebGL view
+- `/api/v1/` — API index
+- `/api/stream` — SSE live stream
+- `/api/snapshot` — current snapshot
+- `/api/alerts` — active alerts
+- `/api/export.geojson` — GeoJSON export
+- `/api/weather?lat=&lon=` — weather at a point
+- `/api/trail/<icao>` — aircraft trail
+- `/api/frames/list` — ring-buffer frame list
+- `/api/frame/<idx>` — single stored frame
+- `/api/buffer/stats` — ring-buffer stats
+- `/healthz` — health check
+- `/metrics` — Prometheus-style metrics
 
 ## Notes
 
-- The dashboard is optimized for a dark terminal-style look.
-- The tile map is the primary interface; the globe is secondary.
-- If `sgp4` is unavailable, ISS pass prediction is disabled.
-- If `websocket-client` is unavailable, AIS ship streaming is disabled.
-- If API keys are missing, the app still runs with reduced data coverage.
-- The live feeds are rate-limited by the configured refresh intervals.
+- The app is designed around public OSINT-style data feeds.
+- Some modules are optional and degrade gracefully when a key or dependency is missing.
+- If `sgp4` is unavailable, Starlink and ISS pass prediction features will be limited.
+- The interface is optimized for a dark terminal-style dashboard.
+
+## License
+
+Add your preferred license here before publishing.
 
 ---
 
-## Roadmap (v1.1+)
-
-- [ ] Persist ring-buffer frames to disk or SQLite
-- [ ] Export threat layers as GeoJSON/CSV on demand
-- [ ] Editable geofences from the UI
-- [ ] Better anomaly baselines per layer
-- [ ] Per-source retry/backoff and outage detection
-- [ ] More robust ship and camera management
-- [ ] Historical playback timeline
-- [ ] Multi-user auth and role separation
-- [ ] Containerized deployment docs
-- [ ] More detailed per-layer analytics and inspection panels
+Built from `gsf_v12.py`.
